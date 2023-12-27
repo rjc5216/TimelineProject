@@ -72,7 +72,7 @@ def create_multiselect():
         st.session_state.active_selections = curr_multiselected
         add_place_to_active_selections()
     if st.sidebar.button('Clear Places'):
-        st.session_state.added_locations_dict = {'addresses': [], 'place_names': []}
+        st.session_state.added_locations_dict = {'addresses': [], 'place_names': [], 'lat_longs': []}
         st.session_state.active_selections = []
         st.session_state.active_places_df_dict = {}
         st.experimental_rerun()

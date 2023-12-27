@@ -8,7 +8,7 @@ have all the JSON files for each month processed.
 Todo:
 
 -- optimize the bad algorithm in add_selection() in importable_file that's rerunning get_place_df() for every place
-   every time a new place is added - need a more efficient way
+   every time a new place is added - need a more efficient way --- maybe cache get_place_df?
 -- fix bug where, when you add a marker from the map, it's not initially showing up on page 3
 ------- fix the stupid Duration error and get the y axis data working!!!!!!!!!!
 
@@ -16,6 +16,7 @@ Todo:
 ------------- github!!!
 
 Future ideas:
+-- change the marker popup color when selected?
  -- Allow the user to combine multiple similar place names into the same object and aggregate data
     (e.g. White Pass, White Pass Village Inn, White Pass Resort.... - want to display cumulative data from all of them)
 
@@ -24,8 +25,6 @@ Future ideas:
 
 -- a clear button for file? just might be nice to reset to original state before anything is uploaded
 
-- see if, since processing doesn't seem to be taking too long, it would be better to go ahead and convert the timezones
-  directly during processing to avoid the delay when users select specific places
 
 
 Done:
@@ -65,6 +64,9 @@ def set_session_state():
     # This is the master dict of all currently selected places and their corresponding dataframes
     if 'active_places_df_dict' not in st.session_state:
         st.session_state.active_places_df_dict = {}
+    # Settings dict
+    if 'settings_dict' not in st.session_state:
+        st.session_state.settings_dict = {'map_marker_color': 'lightblue'}
 
 
 def standardize_address(address):

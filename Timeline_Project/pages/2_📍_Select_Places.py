@@ -36,7 +36,7 @@ def create_map():
     )
     m = folium.Map(zoom_start=5, location=[50, -120], tiles=esri_tile)
     folium.TileLayer('openstreetmap', attr='Open Street Map', name='Open Street Map').add_to(m)
-    folium.TileLayer('stamenterrain', attr='stamenterrain', name='Terrain Map').add_to(m)
+    folium.TileLayer('hikebike', attr='stamenwatercolor', name='Terrain Map').add_to(m)
     folium.LayerControl().add_to(m)
 
     # Creates markers
@@ -44,7 +44,8 @@ def create_map():
     #folium.Marker([47.222549, -120.5495964], popup='Click me').add_to(m)
     for lat_long_tuple in st.session_state.unique_lists_dict['lat_longs']:
         if i < 100:
-            folium.Marker(lat_long_tuple, popup=f'latitude={lat_long_tuple[0]}\nlongitude={lat_long_tuple[1]}').add_to(m)
+            folium.Marker(lat_long_tuple, popup=f'latitude={lat_long_tuple[0]}\nlongitude={lat_long_tuple[1]}', icon=
+            folium.Icon(icon='star', color=st.session_state.settings_dict['map_marker_color'])).add_to(m)
             i+=1
     return m
 
@@ -88,6 +89,7 @@ if st.session_state.data_processed:
         if last_clicked_lat_long not in st.session_state.added_locations_dict['lat_longs']:
             st.session_state.added_locations_dict['lat_longs'].append(last_clicked_lat_long)
             st.session_state.active_selections.append(last_clicked_lat_long)
+            add_place_to_active_selections()
 
     st.write(clicked_markers)
     create_multiselect()
