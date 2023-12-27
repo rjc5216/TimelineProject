@@ -1,0 +1,1 @@
+st.set_page_config(page_title="Timeline Analyzer", page_icon="🗺️", layout="centered")
