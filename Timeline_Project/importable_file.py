@@ -79,28 +79,57 @@ def create_multiselect():
 
 
 def update_curr_place_visits_df(new_date, changed_date):
-    ##### ISSUE:
-    # 1) Don't know how to iterate over DF by row!!! Knowing this would eliminate the second issue.
-
-    # 2) The indices not being in order after sorting in process_data. This makes it extremely hard to iterate over
-    # more than one column at the same time to properly execute this method.
+    """
+    Updates the curr_place_visits_df by finding the correct start and end indices to then slice the master
+    place_visits_df by, restricting it to the selected date range.
+    :param new_date: the new date that has changed
+    :param changed_date: keyword indicating if start or end was changed
+    :return:
+    """
     if changed_date == 'start':
-        for index in range(len(st.session_state.place_visits_df)):
-            curr_start = st.session_state.place_visits_df['startTimestamp'][index]
-            #st.write(curr_start)
-        print(type(st.session_state.place_visits_df['startTimestamp']))
+        start_index = 0
+        for row in st.session_state.place_visits_df.itertuples():
+            curr_start = row.startTimestamp.date()
+            # For start, it goes to the first startTime that's equal
+            # (iterates forwards and lands on the first startTime that is equal to the new startTime)
+            if curr_start < new_date:
+                start_index += 1
+            else:
+                break
+        st.session_state.indices_range['start'] = start_index
+
+    elif changed_date == 'end':
+        end_index = len(st.session_state.place_visits_df) - 1
+        for row in st.session_state.place_visits_df.iloc[::-1].itertuples():
+            curr_end = row.endTimestamp.date()
+            # For end, it goes to the last endTime that's equal
+            # (iterates backwards and lands on the last endTime that is equal to the new endTime)
+            if curr_end > new_date:
+                end_index -= 1
+            else:
+                break
+        st.session_state.indices_range['end'] = end_index
+
+    st.session_state.curr_place_visits_df = st.dataframe(
+        st.session_state.place_visits_df.iloc[st.session_state.indices_range['start']:
+                                              st.session_state.indices_range['end'] + 1])
+
+
 def create_date_range_selector():
-    #st.sidebar.write('Select Date Range')
+
     start_date = st.sidebar.date_input('Start Date', st.session_state.date_range['start'])
     end_date = st.sidebar.date_input('End Date', st.session_state.date_range['end'])
 
+    st.write(start_date, end_date, st.session_state.indices_range)
     if start_date != st.session_state.date_range['start']:
-        update_curr_place_visits_df(start_date, 'start')
         st.session_state.date_range['start'] = start_date
+        update_curr_place_visits_df(start_date, 'start')
+        st.experimental_rerun()
 
     if end_date != st.session_state.date_range['end']:
-        update_curr_place_visits_df(end_date, 'end')
         st.session_state.date_range['end'] = end_date
+        update_curr_place_visits_df(end_date, 'end')
+        st.experimental_rerun()
 
 
 def create_sidebar():

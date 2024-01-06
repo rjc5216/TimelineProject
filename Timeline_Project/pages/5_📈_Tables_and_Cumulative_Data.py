@@ -24,7 +24,11 @@ if st.session_state.data_processed:
         st.write(f'Here is the table of all your visits to: {place}')
         st.dataframe(df)
     st.write('Here is the table of all of your location data in the selected time period:')
-    st.dataframe(st.session_state.curr_place_visits_df)
+
+    #### MASSIVE ERROR HERE:
+    # for some reason curr_place... is a streamlit delta generator ?? and not df
+    print(type(st.session_state.curr_place_visits_df))
+    #st.write(st.session_state.curr_place_visits_df)
 
     create_sidebar()
 else:

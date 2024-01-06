@@ -71,8 +71,12 @@ def set_session_state():
     # Settings dictionary
     if 'settings_dict' not in st.session_state:
         st.session_state.settings_dict = {'map_marker_color': 'lightblue'}
+    # Date range dict of start and end dates
     if 'date_range' not in st.session_state:
         st.session_state.date_range = {'start': None, 'end': None}
+    # Start and end indices for date-restricted place_visits_df
+    if 'indices_range' not in st.session_state:
+        st.session_state.indices_range = {'start': 0, 'end': 0}
 
 
 def standardize_address(address):
@@ -206,13 +210,15 @@ def process_data(location_history_folder):
     end_time = time.time()
     # Sorts by the start time of each visit (messes up the order of the indices which isn't too important - just don't
     # try to access the DF by .loc for anything sequential
-    place_visits_df = place_visits_df.sort_values(by=['startTimestamp'])
+    place_visits_df = place_visits_df.sort_values(by=['startTimestamp'], ignore_index=True)
 
     # Initializes the start and end dates to the actual start and end that Google Takeout has access to
     # (usually starts the day you start location tracking and ends with whenever they download their file)
+    # Also, uses start time for start and end time for end to be as inclusive as possible
     st.session_state.date_range['start'] = place_visits_df.loc[0]['startTimestamp'].date()
-    # NEED TO LOOK UP HOW OT GET LAST ELEMENT OF DF WITHOUT .LOC - THIS IS INCORRECT
     st.session_state.date_range['end'] = place_visits_df.loc[len(place_visits_df) - 1]['endTimestamp'].date()
+    # Changes end index to the actual end (was initialized at 0 as a placeholder; start remains at 0)
+    st.session_state.indices_range['end'] = len(place_visits_df) - 1
     st.write(st.session_state.date_range)
     st.write(f'time: {end_time-start:.3f}\ntotal visits: {len(place_visits_df)}')
     return place_visits_df
