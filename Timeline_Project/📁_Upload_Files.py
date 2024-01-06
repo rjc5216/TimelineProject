@@ -9,19 +9,22 @@ Todo:
 
 -- optimize the bad algorithm in add_selection() in importable_file that's rerunning get_place_df() for every place
    every time a new place is added - need a more efficient way --- maybe cache get_place_df?
--- fix bug where, when you add a marker from the map, it's not initially showing up on page 3
+
 ------- fix the stupid Duration error and get the y axis data working!!!!!!!!!!
 
 ------------------ Marker CLUSTERS!!!!!!!
 ------------- github!!!
 
 Future ideas:
+-- possibly create pop-up warnings for if they select a date outside full date range or try to put start after end
 -- change the marker popup color when selected?
  -- Allow the user to combine multiple similar place names into the same object and aggregate data
     (e.g. White Pass, White Pass Village Inn, White Pass Resort.... - want to display cumulative data from all of them)
 
 
 ---- restrict date range!!!!!???!?!??!?!?!?
+    - # NEED TO LOOK UP HOW OT GET LAST ELEMENT OF DF WITHOUT .LOC -
+    what I have for end date is incorrect (and possibly start date, 0 just seems to be working)
 
 -- a clear button for file? just might be nice to reset to original state before anything is uploaded
 
@@ -35,6 +38,7 @@ SOLVED!! Had to standardize/clean address strings to account for things like Lan
     but aug is by 4 - should be 4 from UTC???)
 SOLVED!! The issue was daylight savings time drifting things by an hour - UTC is actually 5 off normally
 -- OPTIMIZE ADJUST TIMEZONE --- creating TimeZoneFinder object takes foreverrrr, optimize that somehow
+-- fix bug where, when you add a marker from the map, it's not initially showing up on page 3
 """
 import numpy
 
@@ -58,15 +62,17 @@ def set_session_state():
     # Contains all 3 types of locations added from the second page (not multiselect)
     if 'added_locations_dict' not in st.session_state:
         st.session_state.added_locations_dict = {'addresses': [], 'place_names': [], 'lat_longs': []}
-    # Active_selections is the currently selected places in the multiselect
+    # Active_selections is the places available to select in the multiselect
     if 'active_selections' not in st.session_state:
         st.session_state.active_selections = []
-    # This is the master dict of all currently selected places and their corresponding dataframes
+    # This is the master dict of the actively selected places from multiselect and their corresponding dataframes
     if 'active_places_df_dict' not in st.session_state:
         st.session_state.active_places_df_dict = {}
-    # Settings dict
+    # Settings dictionary
     if 'settings_dict' not in st.session_state:
         st.session_state.settings_dict = {'map_marker_color': 'lightblue'}
+    if 'date_range' not in st.session_state:
+        st.session_state.date_range = {'start': None, 'end': None}
 
 
 def standardize_address(address):
@@ -125,6 +131,9 @@ def main():
         if not st.session_state.data_processed:
             location_history_folder = extract_data(file)
             st.session_state.place_visits_df = process_data(location_history_folder)
+            # Initializes current p.v.df to the entire one - will be changed when date ranges change
+            st.session_state.curr_place_visits_df = st.session_state.place_visits_df
+            st.write(st.session_state.curr_place_visits_df)
             st.session_state.unique_lists_dict = get_unique_lists_dict(st.session_state.place_visits_df)
             st.session_state.data_processed = True
             st.write('✅ File Processed Successfully!')
@@ -148,7 +157,7 @@ def process_data(location_history_folder):
     # Adds all the data from each file to a list then creates a df with it afterwards.
     place_visits_list = []
     start = time.time()
-    # Creates just on tz_object and passes to adjust_timezone() to save a ton of time
+    # Creates just one tz_object and passes to adjust_timezone() to save a ton of time and memory
     tz_object = TimezoneFinder()
     # Nested loop to access every month file within every year folder
     for year_folder_name in os.listdir(location_history_folder):
@@ -195,9 +204,16 @@ def process_data(location_history_folder):
     place_visits_df = pd.DataFrame(place_visits_list, columns=['latitudeE7', 'longitudeE7', 'address', 'name',
                                                                'startTimestamp', 'endTimestamp', 'duration'])
     end_time = time.time()
-    # Sorts by the datetime of the start time (messes up the order of the indices which isn't too important - just don't
+    # Sorts by the start time of each visit (messes up the order of the indices which isn't too important - just don't
     # try to access the DF by .loc for anything sequential
     place_visits_df = place_visits_df.sort_values(by=['startTimestamp'])
+
+    # Initializes the start and end dates to the actual start and end that Google Takeout has access to
+    # (usually starts the day you start location tracking and ends with whenever they download their file)
+    st.session_state.date_range['start'] = place_visits_df.loc[0]['startTimestamp'].date()
+    # NEED TO LOOK UP HOW OT GET LAST ELEMENT OF DF WITHOUT .LOC - THIS IS INCORRECT
+    st.session_state.date_range['end'] = place_visits_df.loc[len(place_visits_df) - 1]['endTimestamp'].date()
+    st.write(st.session_state.date_range)
     st.write(f'time: {end_time-start:.3f}\ntotal visits: {len(place_visits_df)}')
     return place_visits_df
 
@@ -226,7 +242,6 @@ def get_unique_lists_dict(place_visits_df):
     Returns and caches dict containing keys latitudes, longitudes, addresses, names, and durations corresponding to
     a list of all those unique attributes (removes duplicates).
     """
-    start = time.time()
     unique_lists_dict = {'lat_longs': [], 'addresses': [], 'names': [], 'durations': []}
     for i in range(len(place_visits_df)):
         # Adds a tuple of (lat, long) to the lat_longs list, ensuring no NaNs are added
@@ -239,7 +254,6 @@ def get_unique_lists_dict(place_visits_df):
     # Converts the val (a list of all the lats/longs...) to a set to remove duplicates, then converts back to a list
     # to make other things like concatenation and ordering easier
     unique_lists_dict = {key: list(set(val)) for key, val in unique_lists_dict.items()}
-    st.write(unique_lists_dict['lat_longs'])
     # st.write(f'unique time: {time.time() - start: .3f}')
     # st.write(unique_lists_dict)
     return unique_lists_dict

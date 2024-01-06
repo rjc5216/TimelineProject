@@ -13,7 +13,7 @@ from streamlit_folium import st_folium
 from sys import path
 # Enables importable_file to be imported
 path.append('Timeline_Project')
-from importable_file import create_multiselect, add_place_to_active_selections
+from importable_file import create_sidebar, add_place_to_active_selections
 
 
 st.set_page_config(page_title="Timeline Analyzer", page_icon="🗺️", layout="centered")
@@ -91,8 +91,7 @@ if st.session_state.data_processed:
             st.session_state.active_selections.append(last_clicked_lat_long)
             add_place_to_active_selections()
 
-    st.write(clicked_markers)
-    create_multiselect()
+    create_sidebar()
 else:
     st.write('#### Upload your Google Takeout file to begin!')
 

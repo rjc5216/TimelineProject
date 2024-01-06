@@ -3,7 +3,7 @@ import streamlit as st
 import plotly.express as px
 from sys import path
 path.append('Timeline_Project')
-from importable_file import create_multiselect
+from importable_file import create_sidebar
 
 
 st.set_page_config(page_title="Timeline Analyzer", page_icon="🗺️", layout="centered")
@@ -51,7 +51,7 @@ def create_scatterplot(df, x_label, y_label, title):
 
 
 if st.session_state.data_processed:
-    create_multiselect()
+    create_sidebar()
 
     st.write('## Location Data Visualizations')
     st.divider()

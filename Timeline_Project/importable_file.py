@@ -76,3 +76,35 @@ def create_multiselect():
         st.session_state.active_selections = []
         st.session_state.active_places_df_dict = {}
         st.experimental_rerun()
+
+
+def update_curr_place_visits_df(new_date, changed_date):
+    ##### ISSUE:
+    # 1) Don't know how to iterate over DF by row!!! Knowing this would eliminate the second issue.
+
+    # 2) The indices not being in order after sorting in process_data. This makes it extremely hard to iterate over
+    # more than one column at the same time to properly execute this method.
+    if changed_date == 'start':
+        for index in range(len(st.session_state.place_visits_df)):
+            curr_start = st.session_state.place_visits_df['startTimestamp'][index]
+            #st.write(curr_start)
+        print(type(st.session_state.place_visits_df['startTimestamp']))
+def create_date_range_selector():
+    #st.sidebar.write('Select Date Range')
+    start_date = st.sidebar.date_input('Start Date', st.session_state.date_range['start'])
+    end_date = st.sidebar.date_input('End Date', st.session_state.date_range['end'])
+
+    if start_date != st.session_state.date_range['start']:
+        update_curr_place_visits_df(start_date, 'start')
+        st.session_state.date_range['start'] = start_date
+
+    if end_date != st.session_state.date_range['end']:
+        update_curr_place_visits_df(end_date, 'end')
+        st.session_state.date_range['end'] = end_date
+
+
+def create_sidebar():
+    create_multiselect()
+    st.sidebar.divider()
+    create_date_range_selector()
+
